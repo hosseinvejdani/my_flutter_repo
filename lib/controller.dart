@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 class MonthPickerController extends GetxController
     with GetSingleTickerProviderStateMixin {
   //----------------------------
+  final dynamic _pickerOpen = false.obs;
   late AnimationController _controller;
   final _pickerYear = DateTime.now().year.obs;
   final _selectedMonth = DateTime(
@@ -19,6 +20,10 @@ class MonthPickerController extends GetxController
       duration: const Duration(milliseconds: 100),
       vsync: this,
     );
+  }
+
+  dynamic get pickerOpen {
+    return _pickerOpen;
   }
 
   RxInt get pickerYear {
@@ -38,7 +43,17 @@ class MonthPickerController extends GetxController
   }
 
   void switchPicker() {
-    // _pickerOpen.value = !_pickerOpen.value;
-    Get.back();
+    _pickerOpen.value
+        ? _controller.reverse(from: 0.5)
+        : _controller.forward(from: 0.0);
+    _pickerOpen.value = !_pickerOpen.value;
+
+    if (!_pickerOpen.value) {
+      Get.back();
+    }
+  }
+
+  Animation<double> rotationController() {
+    return Tween(begin: 0.0, end: 0.5).animate(_controller);
   }
 }

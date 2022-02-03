@@ -107,10 +107,10 @@ class Picker extends StatelessWidget {
   Future<Object?> _monthPicker(BuildContext context) {
     return showGeneralDialog(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: false,
       transitionDuration: const Duration(milliseconds: 500),
       barrierLabel: MaterialLocalizations.of(context).dialogLabel,
-      barrierColor: Colors.black.withOpacity(0.5),
+      barrierColor: Colors.black.withOpacity(0.7),
       pageBuilder: (context, _, __) {
         return Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -150,8 +150,24 @@ class Picker extends StatelessWidget {
                       ],
                     ),
                     ...generateMonths(),
-                    const SizedBox(
-                      height: 10.0,
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: TextButton(
+                            onPressed: () => controller.switchPicker(),
+                            child: const Text(
+                              'CANCLE',
+                              style: TextStyle(color: Colors.amber),
+                            ),
+                          ),
+                        ),
+                        const Expanded(
+                          child: SizedBox(
+                            height: 10.0,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -179,11 +195,15 @@ class Picker extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        controller.switchPicker();
         _monthPicker(context);
       },
       child: Row(
         children: [
-          const Icon(Icons.arrow_drop_down),
+          RotationTransition(
+            turns: controller.rotationController(),
+            child: const Icon(Icons.arrow_drop_down),
+          ),
           Obx(
             () => Text(
               // DateFormat.yMMMM().format(controller.selectedMonth.value)
