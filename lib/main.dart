@@ -28,6 +28,7 @@ class AnimatedMonthPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final h = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -98,39 +99,9 @@ class AnimatedMonthPicker extends StatelessWidget {
               duration: const Duration(milliseconds: 300),
               child: Obx(
                 () => SizedBox(
-                  height: controller.isPickerOpen.value ? 255 : 0.0,
+                  height: controller.isPickerOpen.value ? 0.35 * h : 0.0,
                   child: Column(
                     children: [
-                      // Row(
-                      //   children: [
-                      //     IconButton(
-                      //       onPressed: () => controller.changeYear(-1),
-                      //       icon: Icon(Icons.navigate_before_rounded,
-                      //           color: Colors.grey[600]),
-                      //     ),
-                      //     Expanded(
-                      //       child: Center(
-                      //         child: Obx(
-                      //           () => Text(
-                      //             controller.pickerYear.toString(),
-                      //             // style: TextStyle(fontWeight: FontWeight.bold),
-                      //           ),
-                      //         ),
-                      //       ),
-                      //     ),
-                      //     IconButton(
-                      //       onPressed: () => controller.changeYear(1),
-                      //       icon: Icon(
-                      //         Icons.navigate_next_rounded,
-                      //         color: Colors.grey[600],
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
-                      // ...generateMonths(),
-                      // const SizedBox(
-                      //   height: 10.0,
-                      // ),
                       YearPickerRow(),
                       MonthPickerGrid(),
                       ButtonGroup(),
@@ -235,11 +206,11 @@ class MonthPickerGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final h = MediaQuery.of(context).size.height;
     return SizedBox(
-      // TODO sove this hard coding
-      height: 140,
+      height: 0.185 * h,
       child: GridView.count(
-        padding: const EdgeInsets.all(0),
+        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 0),
         crossAxisCount: 6,
         children: generateMonths(),
       ),
