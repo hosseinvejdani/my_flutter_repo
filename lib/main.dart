@@ -26,69 +26,13 @@ class AnimatedMonthPicker extends StatelessWidget {
 
   final controller = Get.put(MonthPickerController());
 
-  List<Widget> generateRowOfMonths(from, to) {
-    List<Widget> months = [];
-    for (int i = from; i <= to; i++) {
-      DateTime dateTime = DateTime(controller.pickerYear.value, i, 1);
-      final backgroundColor =
-          dateTime.isAtSameMomentAs(controller.selectedMonth.value)
-              ? Colors.amberAccent[200]?.withOpacity(0.9)
-              : Colors.transparent;
-      months.add(
-        Obx(() => AnimatedSwitcher(
-              duration: kThemeChangeDuration,
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: child,
-                );
-              },
-              child: TextButton(
-                key: ValueKey(backgroundColor),
-                onPressed: () {
-                  controller.selectMonth(dateTime);
-                  controller.switchPicker();
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: backgroundColor,
-                  shape: const CircleBorder(),
-                ),
-                child: Text(
-                  DateFormat('MMM').format(dateTime),
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: dateTime
-                              .isAtSameMomentAs(controller.selectedMonth.value)
-                          ? FontWeight.bold
-                          : FontWeight.normal),
-                ),
-              ),
-            )),
-      );
-    }
-    return months;
-  }
-
-  List<Widget> generateMonths() {
-    return [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: generateRowOfMonths(1, 6),
-      ),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: generateRowOfMonths(7, 12),
-      ),
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
         title: Obx(() =>
-            Text(DateFormat.yMMMM().format(controller.selectedMonth.value))),
+            Text(DateFormat.yMMMM().format(controller.selectedDateTime.value))),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 20),
@@ -102,7 +46,8 @@ class AnimatedMonthPicker extends StatelessWidget {
                   ),
                   Obx(
                     () => Text(
-                      DateFormat('MMM').format(controller.selectedMonth.value),
+                      DateFormat('MMM')
+                          .format(controller.selectedDateTime.value),
                       style: const TextStyle(color: Colors.white, fontSize: 17),
                     ),
                   ),
@@ -121,7 +66,7 @@ class AnimatedMonthPicker extends StatelessWidget {
             child: Center(
               child: Obx(
                 () => Text(
-                  DateFormat.yMMMM().format(controller.selectedMonth.value),
+                  DateFormat.yMMMM().format(controller.selectedDateTime.value),
                 ),
               ),
             ),
@@ -138,7 +83,7 @@ class AnimatedMonthPicker extends StatelessWidget {
                   filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                   child: Obx(
                     () => Container(
-                      height: controller.pickerOpen.value ? null : 0.0,
+                      height: controller.isPickerOpen.value ? null : 0.0,
                     ),
                   ),
                 ),
@@ -153,39 +98,42 @@ class AnimatedMonthPicker extends StatelessWidget {
               duration: const Duration(milliseconds: 300),
               child: Obx(
                 () => SizedBox(
-                  height: controller.pickerOpen.value ? 155 : 0.0,
+                  height: controller.isPickerOpen.value ? 255 : 0.0,
                   child: Column(
                     children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => controller.changeYear(-1),
-                            icon: Icon(Icons.navigate_before_rounded,
-                                color: Colors.grey[600]),
-                          ),
-                          Expanded(
-                            child: Center(
-                              child: Obx(
-                                () => Text(
-                                  controller.pickerYear.toString(),
-                                  // style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => controller.changeYear(1),
-                            icon: Icon(
-                              Icons.navigate_next_rounded,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                      ...generateMonths(),
-                      const SizedBox(
-                        height: 10.0,
-                      ),
+                      // Row(
+                      //   children: [
+                      //     IconButton(
+                      //       onPressed: () => controller.changeYear(-1),
+                      //       icon: Icon(Icons.navigate_before_rounded,
+                      //           color: Colors.grey[600]),
+                      //     ),
+                      //     Expanded(
+                      //       child: Center(
+                      //         child: Obx(
+                      //           () => Text(
+                      //             controller.pickerYear.toString(),
+                      //             // style: TextStyle(fontWeight: FontWeight.bold),
+                      //           ),
+                      //         ),
+                      //       ),
+                      //     ),
+                      //     IconButton(
+                      //       onPressed: () => controller.changeYear(1),
+                      //       icon: Icon(
+                      //         Icons.navigate_next_rounded,
+                      //         color: Colors.grey[600],
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
+                      // ...generateMonths(),
+                      // const SizedBox(
+                      //   height: 10.0,
+                      // ),
+                      YearPickerRow(),
+                      MonthPickerGrid(),
+                      ButtonGroup(),
                     ],
                   ),
                 ),
@@ -194,6 +142,136 @@ class AnimatedMonthPicker extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class YearPickerRow extends StatelessWidget {
+  YearPickerRow({Key? key}) : super(key: key);
+
+  final controller = Get.find<MonthPickerController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        IconButton(
+          onPressed: () => controller.changeYear(-1),
+          icon: Icon(Icons.navigate_before_rounded, color: Colors.grey[600]),
+        ),
+        Expanded(
+          child: Center(
+            child: Obx(
+              () => Text(
+                controller.selectedYear.toString(),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ),
+          ),
+        ),
+        IconButton(
+          onPressed: () => controller.changeYear(1),
+          icon: Icon(
+            Icons.navigate_next_rounded,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class MonthPickerGrid extends StatelessWidget {
+  MonthPickerGrid({Key? key}) : super(key: key);
+
+  final controller = Get.find<MonthPickerController>();
+
+  List<Widget> generateMonths() {
+    List<Widget> months = [];
+    for (int i = 1; i <= 12; i++) {
+      months.add(
+        Obx(() {
+          DateTime dateTime = DateTime(controller.selectedYear.value, i, 1);
+          final backgroundColor =
+              dateTime.isAtSameMomentAs(controller.selectedDateTime.value)
+                  ? Colors.amberAccent[200]?.withOpacity(0.9)
+                  : Colors.transparent;
+          return AnimatedSwitcher(
+            duration: kThemeChangeDuration,
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+            child: TextButton(
+              key: ValueKey(backgroundColor),
+              onPressed: () {
+                controller.selectMonth(dateTime);
+                controller.switchPicker();
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: backgroundColor,
+                shape: const CircleBorder(),
+              ),
+              child: Text(
+                DateFormat('MMM').format(dateTime),
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: dateTime
+                          .isAtSameMomentAs(controller.selectedDateTime.value)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+            ),
+          );
+        }),
+      );
+    }
+    return months;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      // TODO sove this hard coding
+      height: 140,
+      child: GridView.count(
+        padding: const EdgeInsets.all(0),
+        crossAxisCount: 6,
+        children: generateMonths(),
+      ),
+    );
+  }
+}
+
+class ButtonGroup extends StatelessWidget {
+  ButtonGroup({Key? key}) : super(key: key);
+
+  final controller = Get.find<MonthPickerController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(
+          child: SizedBox(
+            height: 6.0,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6.0),
+          child: TextButton(
+            onPressed: () => controller.jumpToThisMonth(),
+            child: const Text(
+              'THIS MONTH',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
