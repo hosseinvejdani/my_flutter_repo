@@ -4,10 +4,10 @@ import 'package:get/get.dart';
 class MonthPickerController extends GetxController
     with GetSingleTickerProviderStateMixin {
   //----------------------------
-  final dynamic _pickerOpen = false.obs;
-  late AnimationController _controller;
-  final _pickerYear = DateTime.now().year.obs;
-  final _selectedMonth = DateTime(
+  final dynamic _isPickerOpen = false.obs;
+  late AnimationController _rotationController;
+  final _selectedYear = DateTime.now().year.obs;
+  final _selectedDateTime = DateTime(
     DateTime.now().year,
     DateTime.now().month,
     1,
@@ -16,44 +16,52 @@ class MonthPickerController extends GetxController
   @override
   void onInit() {
     super.onInit();
-    _controller = AnimationController(
+    _rotationController = AnimationController(
       duration: const Duration(milliseconds: 100),
       vsync: this,
     );
   }
 
-  dynamic get pickerOpen {
-    return _pickerOpen;
+  dynamic get isPickerOpen {
+    return _isPickerOpen;
   }
 
-  RxInt get pickerYear {
-    return _pickerYear;
+  RxInt get selectedYear {
+    return _selectedYear;
   }
 
-  Rx<DateTime> get selectedMonth {
-    return _selectedMonth;
+  Rx<DateTime> get selectedDateTime {
+    return _selectedDateTime;
   }
 
   void changeYear(int year) {
-    _pickerYear.value = _pickerYear.value + year;
+    _selectedYear.value = _selectedYear.value + year;
   }
 
   void selectMonth(DateTime dateTime) {
-    _selectedMonth.value = dateTime;
+    _selectedDateTime.value = dateTime;
   }
 
   void switchPicker() {
-    _pickerOpen.value
-        ? _controller.reverse(from: 0.5)
-        : _controller.forward(from: 0.0);
-    _pickerOpen.value = !_pickerOpen.value;
+    _isPickerOpen.value
+        ? _rotationController.reverse(from: 0.5)
+        : _rotationController.forward(from: 0.0);
+    _isPickerOpen.value = !_isPickerOpen.value;
 
-    if (!_pickerOpen.value) {
+    if (!_isPickerOpen.value) {
       Get.back();
     }
   }
 
   Animation<double> rotationController() {
-    return Tween(begin: 0.0, end: 0.5).animate(_controller);
+    return Tween(begin: 0.0, end: 0.5).animate(_rotationController);
+  }
+
+  void jumpToThisMonth() {
+    _selectedDateTime.value = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      1,
+    );
   }
 }

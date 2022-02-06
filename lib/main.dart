@@ -31,80 +31,21 @@ class HomePage extends StatelessWidget {
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 20),
-              child: Picker(),
+              child: AnimatedMonthPicker(),
             ),
           ],
         ),
-        // body: Center(child: Text(DateFormat.yMMMM().format(controller.selectedMonth.value)),),
       ),
     );
   }
 }
 
-class Picker extends StatelessWidget {
-  Picker({Key? key}) : super(key: key);
+class AnimatedMonthPicker extends StatelessWidget {
+  AnimatedMonthPicker({Key? key}) : super(key: key);
 
   final controller = Get.put(MonthPickerController());
 
-  List<Widget> generateRowOfMonths(from, to) {
-    List<Widget> months = [];
-    for (int i = from; i <= to; i++) {
-      months.add(
-        Obx(() {
-          DateTime dateTime = DateTime(controller.pickerYear.value, i, 1);
-          final backgroundColor =
-              dateTime.isAtSameMomentAs(controller.selectedMonth.value)
-                  ? Colors.amberAccent[200]?.withOpacity(0.9)
-                  : Colors.transparent;
-          return AnimatedSwitcher(
-            duration: kThemeChangeDuration,
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
-            },
-            child: TextButton(
-              key: ValueKey(backgroundColor),
-              onPressed: () {
-                controller.selectMonth(dateTime);
-                controller.switchPicker();
-              },
-              style: TextButton.styleFrom(
-                backgroundColor: backgroundColor,
-                shape: const CircleBorder(),
-              ),
-              child: Text(
-                DateFormat('MMM').format(dateTime),
-                style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: dateTime
-                            .isAtSameMomentAs(controller.selectedMonth.value)
-                        ? FontWeight.bold
-                        : FontWeight.normal),
-              ),
-            ),
-          );
-        }),
-      );
-    }
-    return months;
-  }
-
-  List<Widget> generateMonths() {
-    return [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: generateRowOfMonths(1, 6),
-      ),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: generateRowOfMonths(7, 12),
-      ),
-    ];
-  }
-
-  Future<Object?> _monthPicker(BuildContext context) {
+  Future<Object?> _monthPickerGeneralDialog(BuildContext context) {
     return showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -115,6 +56,7 @@ class Picker extends StatelessWidget {
         return Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
+            // TODO solve this hard coding
             const SizedBox(height: 80),
             Container(
               width: MediaQuery.of(context).size.width,
@@ -122,53 +64,11 @@ class Picker extends StatelessWidget {
               child: Card(
                 elevation: 0,
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => controller.changeYear(-1),
-                          icon: Icon(Icons.navigate_before_rounded,
-                              color: Colors.grey[600]),
-                        ),
-                        Expanded(
-                          child: Center(
-                            child: Obx(
-                              () => Text(
-                                controller.pickerYear.toString(),
-                                // style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => controller.changeYear(1),
-                          icon: Icon(
-                            Icons.navigate_next_rounded,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    ...generateMonths(),
-                    Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: TextButton(
-                            onPressed: () => controller.switchPicker(),
-                            child: const Text(
-                              'CANCLE',
-                              style: TextStyle(color: Colors.amber),
-                            ),
-                          ),
-                        ),
-                        const Expanded(
-                          child: SizedBox(
-                            height: 10.0,
-                          ),
-                        ),
-                      ],
-                    ),
+                    YearPickerRow(),
+                    MonthPickerGrid(),
+                    ButtonGroup(),
                   ],
                 ),
               ),
@@ -196,7 +96,7 @@ class Picker extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         controller.switchPicker();
-        _monthPicker(context);
+        _monthPickerGeneralDialog(context);
       },
       child: Row(
         children: [
@@ -207,12 +107,152 @@ class Picker extends StatelessWidget {
           Obx(
             () => Text(
               // DateFormat.yMMMM().format(controller.selectedMonth.value)
-              DateFormat('yMMM').format(controller.selectedMonth.value),
+              DateFormat('yMMM').format(controller.selectedDateTime.value),
               style: const TextStyle(color: Colors.white, fontSize: 17),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class YearPickerRow extends StatelessWidget {
+  YearPickerRow({Key? key}) : super(key: key);
+
+  final controller = Get.find<MonthPickerController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        IconButton(
+          onPressed: () => controller.changeYear(-1),
+          icon: Icon(Icons.navigate_before_rounded, color: Colors.grey[600]),
+        ),
+        Expanded(
+          child: Center(
+            child: Obx(
+              () => Text(
+                controller.selectedYear.toString(),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ),
+          ),
+        ),
+        IconButton(
+          onPressed: () => controller.changeYear(1),
+          icon: Icon(
+            Icons.navigate_next_rounded,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class MonthPickerGrid extends StatelessWidget {
+  MonthPickerGrid({Key? key}) : super(key: key);
+
+  final controller = Get.find<MonthPickerController>();
+
+  List<Widget> generateMonths() {
+    List<Widget> months = [];
+    for (int i = 1; i <= 12; i++) {
+      months.add(
+        Obx(() {
+          DateTime dateTime = DateTime(controller.selectedYear.value, i, 1);
+          final backgroundColor =
+              dateTime.isAtSameMomentAs(controller.selectedDateTime.value)
+                  ? Colors.amberAccent[200]?.withOpacity(0.9)
+                  : Colors.transparent;
+          return AnimatedSwitcher(
+            duration: kThemeChangeDuration,
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+            child: TextButton(
+              key: ValueKey(backgroundColor),
+              onPressed: () {
+                controller.selectMonth(dateTime);
+                controller.switchPicker();
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: backgroundColor,
+                shape: const CircleBorder(),
+              ),
+              child: Text(
+                DateFormat('MMM').format(dateTime),
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: dateTime
+                          .isAtSameMomentAs(controller.selectedDateTime.value)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+            ),
+          );
+        }),
+      );
+    }
+    return months;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      // TODO sove this hard coding
+      height: 140,
+      child: GridView.count(
+        padding: const EdgeInsets.all(0),
+        crossAxisCount: 6,
+        children: generateMonths(),
+      ),
+    );
+  }
+}
+
+class ButtonGroup extends StatelessWidget {
+  ButtonGroup({Key? key}) : super(key: key);
+
+  final controller = Get.find<MonthPickerController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6.0),
+          child: TextButton(
+            onPressed: () => controller.switchPicker(),
+            child: const Text(
+              'CANCLE',
+              style: TextStyle(color: Colors.amber),
+            ),
+          ),
+        ),
+        const Expanded(
+          child: SizedBox(
+            height: 6.0,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6.0),
+          child: TextButton(
+            onPressed: () => controller.jumpToThisMonth(),
+            child: const Text(
+              'THIS MONTH',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
