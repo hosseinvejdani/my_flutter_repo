@@ -1,8 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:get/get.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 import './controller.dart';
+import 'package:persian_number_utility/persian_number_utility.dart';
 
 // this is english version of animated month picker with getx
 
@@ -16,6 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
       home: AnimatedMonthPicker(),
     );
   }
@@ -28,12 +30,12 @@ class AnimatedMonthPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final h = MediaQuery.of(context).size.height;
+    final w = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1,
         centerTitle: true,
-        title: Obx(() =>
-            Text(DateFormat.yMMMM().format(controller.selectedDateTime.value))),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 20),
@@ -43,13 +45,20 @@ class AnimatedMonthPicker extends StatelessWidget {
                 children: [
                   RotationTransition(
                     turns: controller.rotationController(),
-                    child: const Icon(Icons.arrow_drop_down),
+                    child: Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.grey[700],
+                    ),
                   ),
                   Obx(
                     () => Text(
-                      DateFormat('MMM')
-                          .format(controller.selectedDateTime.value),
-                      style: const TextStyle(color: Colors.white, fontSize: 17),
+                      controller.formatToYearNumberMonthName(
+                          controller.selectedDateTime.value),
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 17,
+                        fontFamily: 'yekan',
+                      ),
                     ),
                   ),
                 ],
@@ -63,17 +72,19 @@ class AnimatedMonthPicker extends StatelessWidget {
           Container(
             height: MediaQuery.of(context).size.height,
             width: double.infinity,
-            color: Colors.white,
+            color: Colors.grey[50],
             child: Center(
               child: Obx(
                 () => Text(
-                  DateFormat.yMMMM().format(controller.selectedDateTime.value),
+                  controller.formatToYearNumberMonthName(
+                      controller.selectedDateTime.value),
+                  style: const TextStyle(fontSize: 25),
                 ),
               ),
             ),
           ),
           GestureDetector(
-            onTap: () => controller.switchPicker(),
+            onTap: () => controller.closePicker(),
             child: Material(
               color: Colors.black.withOpacity(0.7),
               child: AnimatedSize(
@@ -99,7 +110,7 @@ class AnimatedMonthPicker extends StatelessWidget {
               duration: const Duration(milliseconds: 300),
               child: Obx(
                 () => SizedBox(
-                  height: controller.isPickerOpen.value ? 0.35 * h : 0.0,
+                  height: controller.isPickerOpen.value ? 0.92 * w : 0.0,
                   child: Column(
                     children: [
                       YearPickerRow(),
@@ -124,28 +135,46 @@ class YearPickerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        IconButton(
-          onPressed: () => controller.changeYear(-1),
-          icon: Icon(Icons.navigate_before_rounded, color: Colors.grey[600]),
+        Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: IconButton(
+            onPressed: () => controller.changeYear(-1),
+            icon: Icon(
+              Icons.navigate_before_rounded,
+              color: Colors.grey[600],
+              size: 35,
+            ),
+          ),
         ),
-        Expanded(
+        SizedBox(
+          width: 0.4 * w,
           child: Center(
             child: Obx(
               () => Text(
-                controller.selectedYear.toString(),
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                controller.selectedYear.toString().toPersianDigit(),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  // fontFamily: 'yekan',
+                ),
               ),
             ),
           ),
         ),
-        IconButton(
-          onPressed: () => controller.changeYear(1),
-          icon: Icon(
-            Icons.navigate_next_rounded,
-            color: Colors.grey[600],
+        Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: IconButton(
+            onPressed: () => controller.changeYear(1),
+            icon: Icon(
+              Icons.navigate_next_rounded,
+              color: Colors.grey[600],
+              size: 35,
+            ),
           ),
         ),
       ],
@@ -158,16 +187,19 @@ class MonthPickerGrid extends StatelessWidget {
 
   final controller = Get.find<MonthPickerController>();
 
-  List<Widget> generateMonths() {
+  List<Widget> jalaliGenerateMonths(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+
     List<Widget> months = [];
     for (int i = 1; i <= 12; i++) {
       months.add(
         Obx(() {
-          DateTime dateTime = DateTime(controller.selectedYear.value, i, 1);
-          final backgroundColor =
-              dateTime.isAtSameMomentAs(controller.selectedDateTime.value)
-                  ? Colors.amberAccent[200]?.withOpacity(0.9)
-                  : Colors.transparent;
+          // DateTime dateTime = DateTime(controller.selectedYear.value, i, 1);
+          Jalali jalaiDateTime = Jalali(controller.selectedYear.value, i, 1);
+          final backgroundColor = jalaiDateTime.toDateTime().isAtSameMomentAs(
+                  controller.selectedDateTime.value.toDateTime())
+              ? Colors.amberAccent[200]?.withOpacity(0.9)
+              : Colors.transparent;
           return AnimatedSwitcher(
             duration: kThemeChangeDuration,
             transitionBuilder: (Widget child, Animation<double> animation) {
@@ -176,24 +208,35 @@ class MonthPickerGrid extends StatelessWidget {
                 child: child,
               );
             },
-            child: TextButton(
-              key: ValueKey(backgroundColor),
-              onPressed: () {
-                controller.selectMonth(dateTime);
-                controller.switchPicker();
-              },
-              style: TextButton.styleFrom(
-                backgroundColor: backgroundColor,
-                shape: const CircleBorder(),
-              ),
-              child: Text(
-                DateFormat('MMM').format(dateTime),
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: dateTime
-                          .isAtSameMomentAs(controller.selectedDateTime.value)
-                      ? FontWeight.bold
-                      : FontWeight.normal,
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 5.0),
+              child: ElevatedButton(
+                key: ValueKey(backgroundColor),
+                onPressed: () {
+                  controller.selectMonth(jalaiDateTime);
+                  // controller.switchPicker();
+                },
+                style: ElevatedButton.styleFrom(
+                  primary: backgroundColor,
+                  elevation: 0.0,
+                  fixedSize: Size(w / 4, w / 20),
+                  // shape: const StadiumBorder(),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12), // <-- Radius
+                  ),
+                ),
+                child: Text(
+                  controller.formatToMonthName(jalaiDateTime),
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontFamily: 'yekan',
+                    fontWeight: jalaiDateTime.toDateTime().isAtSameMomentAs(
+                            controller.selectedDateTime.value.toDateTime())
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
                 ),
               ),
             ),
@@ -206,13 +249,14 @@ class MonthPickerGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final h = MediaQuery.of(context).size.height;
+    final w = MediaQuery.of(context).size.width;
     return SizedBox(
-      height: 0.185 * h,
+      height: 0.52 * w,
       child: GridView.count(
+        childAspectRatio: 2.7,
         padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 0),
-        crossAxisCount: 6,
-        children: generateMonths(),
+        crossAxisCount: 3,
+        children: jalaliGenerateMonths(context),
       ),
     );
   }
@@ -229,16 +273,36 @@ class ButtonGroup extends StatelessWidget {
       children: [
         const Expanded(
           child: SizedBox(
-            height: 6.0,
+            height: 2.0,
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6.0),
+          padding: const EdgeInsets.only(top: 6.0, right: 35, bottom: 6.0),
           child: TextButton(
             onPressed: () => controller.jumpToThisMonth(),
             child: const Text(
-              'THIS MONTH',
-              style: TextStyle(color: Colors.red),
+              'همین ماه',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'yekan',
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 6.0, right: 30, bottom: 6.0),
+          child: TextButton(
+            onPressed: () => controller.closePicker(),
+            child: const Text(
+              'خوبه',
+              style: TextStyle(
+                color: Colors.green,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'yekan',
+              ),
             ),
           ),
         ),
