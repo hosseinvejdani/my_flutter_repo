@@ -1,11 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:shamsi_date/shamsi_date.dart';
-import './controller.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
+import './controller.dart';
 
-// this is english version of animated month picker with getx
+// this is animated persian month picker with getx
 
 void main() {
   runApp(const MyApp());
@@ -19,6 +20,15 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       home: AnimatedMonthPicker(),
+      localizationsDelegates: const [
+        GlobalCupertinoLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale("fa", "IR"), // OR Locale('ar', 'AE') OR Other RTL locales
+      ],
+      locale: const Locale("fa", "IR"),
     );
   }
 }
@@ -32,28 +42,36 @@ class AnimatedMonthPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     return Scaffold(
+      drawer: const Drawer(),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 1,
         centerTitle: true,
         actions: [
+          Builder(
+            builder: (context) => // Ensure Scaffold is in context
+                IconButton(
+              icon: const Icon(
+                Icons.menu,
+                color: Colors.black,
+              ),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.only(right: 20),
+            padding: const EdgeInsets.only(left: 20),
             child: GestureDetector(
               onTap: () => controller.switchPicker(),
               child: Row(
                 children: [
-                  RotationTransition(
-                    turns: controller.rotationController(),
-                    child: Icon(
-                      Icons.arrow_drop_down,
-                      color: Colors.grey[700],
-                    ),
+                  const SizedBox(
+                    width: 30,
                   ),
                   Obx(
                     () => Text(
                       controller.formatToYearNumberMonthName(
                           controller.selectedDateTime.value),
+                      textDirection: TextDirection.ltr,
                       style: const TextStyle(
                         color: Colors.black,
                         fontSize: 17,
@@ -61,10 +79,22 @@ class AnimatedMonthPicker extends StatelessWidget {
                       ),
                     ),
                   ),
+                  RotationTransition(
+                    turns: controller.rotationController(),
+                    child: Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.grey[700],
+                    ),
+                  ),
                 ],
               ),
             ),
-          )
+          ),
+          const Expanded(
+            child: SizedBox(
+              height: 3,
+            ),
+          ),
         ],
       ),
       body: Stack(
@@ -78,6 +108,7 @@ class AnimatedMonthPicker extends StatelessWidget {
                 () => Text(
                   controller.formatToYearNumberMonthName(
                       controller.selectedDateTime.value),
+                  textDirection: TextDirection.ltr,
                   style: const TextStyle(fontSize: 25),
                 ),
               ),
@@ -136,48 +167,51 @@ class YearPickerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: IconButton(
-            onPressed: () => controller.changeYear(-1),
-            icon: Icon(
-              Icons.navigate_before_rounded,
-              color: Colors.grey[600],
-              size: 35,
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: IconButton(
+              onPressed: () => controller.changeYear(-1),
+              icon: Icon(
+                Icons.navigate_before_rounded,
+                color: Colors.grey[600],
+                size: 35,
+              ),
             ),
           ),
-        ),
-        SizedBox(
-          width: 0.4 * w,
-          child: Center(
-            child: Obx(
-              () => Text(
-                controller.selectedYear.toString().toPersianDigit(),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                  // fontFamily: 'yekan',
+          SizedBox(
+            width: 0.4 * w,
+            child: Center(
+              child: Obx(
+                () => Text(
+                  controller.selectedYear.toString().toPersianDigit(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    // fontFamily: 'yekan',
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: IconButton(
-            onPressed: () => controller.changeYear(1),
-            icon: Icon(
-              Icons.navigate_next_rounded,
-              color: Colors.grey[600],
-              size: 35,
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: IconButton(
+              onPressed: () => controller.changeYear(1),
+              icon: Icon(
+                Icons.navigate_next_rounded,
+                color: Colors.grey[600],
+                size: 35,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -269,41 +303,37 @@ class ButtonGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
     return Row(
       children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 6.0, right: 35, bottom: 6.0),
+          child: TextButton(
+            onPressed: () => controller.jumpToThisMonth(),
+            child: const Text(
+              'ماه جاری',
+              style: TextStyle(
+                color: Colors.cyan,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'yekan',
+              ),
+            ),
+          ),
+        ),
         const Expanded(
           child: SizedBox(
             height: 2.0,
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: 6.0, right: 35, bottom: 6.0),
-          child: TextButton(
-            onPressed: () => controller.jumpToThisMonth(),
-            child: const Text(
-              'همین ماه',
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'yekan',
-              ),
+          padding: const EdgeInsets.only(top: 6.0, left: 35, bottom: 6.0),
+          child: IconButton(
+            icon: const Icon(
+              Icons.close,
+              color: Colors.red,
             ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 6.0, right: 30, bottom: 6.0),
-          child: TextButton(
             onPressed: () => controller.closePicker(),
-            child: const Text(
-              'خوبه',
-              style: TextStyle(
-                color: Colors.green,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'yekan',
-              ),
-            ),
           ),
         ),
       ],
